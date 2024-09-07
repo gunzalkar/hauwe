@@ -25,6 +25,7 @@ def check_ssh_authentication_type(host, username, password):
         while not shell.recv_ready():
             time.sleep(1)
         output = shell.recv(65536).decode()
+        print(output)
 
         # Check for "authentication-type password" in the output
         if 'authentication-type password' in output:
