@@ -30,6 +30,7 @@ def check_ssh_authentication_type(host, username, password):
     finally:
         connection.disconnect()
 
+# Usage example
 host = '192.168.1.250'   # Replace with your router's IP
 username = 'kshitij'       # Replace with your username
 password = 'Password@1234'    # Replace with your password
