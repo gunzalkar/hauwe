@@ -9,6 +9,7 @@ def check_ssh_authentication_type(host, username, password):
         'password': password,
     }
 
+    connection = None
     try:
         # Establish an SSH connection to the Huawei router
         connection = ConnectHandler(**huawei_router)
@@ -28,12 +29,14 @@ def check_ssh_authentication_type(host, username, password):
     except Exception as e:
         return f"Error: {str(e)}"
     finally:
-        connection.disconnect()
+        # Disconnect if the connection was successfully established
+        if connection:
+            connection.disconnect()
 
 # Usage example
-host = '192.168.1.250'   # Replace with your router's IP
-username = 'kshitij'       # Replace with your username
-password = 'Password@1234'    # Replace with your password
+host = '192.168.1.250'   
+username = 'kshitij'      
+password = 'Password@1234'  
 
 result = check_ssh_authentication_type(host, username, password)
 print(result)
