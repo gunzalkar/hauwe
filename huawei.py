@@ -7,19 +7,20 @@ def check_ssh_authentication_type(host, username, password):
         'host': host,
         'username': username,
         'password': password,
+        'global_delay_factor': 2,  # Adjust if there's a delay issue
     }
 
     connection = None
     try:
         # Establish an SSH connection to the Huawei router
         connection = ConnectHandler(**huawei_router)
+
+        # Explicitly set the expected prompt as <Huawei>
+        connection.send_command('system-view', expect_string=r'<Huawei>')
         
-        # Enter system-view mode, expect "<Huawei>" prompt after the command
-        connection.send_command('system-view', expect_string='<Huawei>')
-        
-        # Run the command to display SSH user configurations, expect the prompt again
+        # Run the command to display SSH user configurations
         command = 'display current-configuration | include ssh user'
-        output = connection.send_command(command, expect_string='<Huawei>')
+        output = connection.send_command(command, expect_string=r'<Huawei>')
 
         # Check for "authentication-type password" in the output
         if 'authentication-type password' in output:
