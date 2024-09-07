@@ -122,7 +122,6 @@ def correct_SNMP_auth_check(host, username, password):
     ssh_client.close()
     return 'authentication-mode sha cipher' in output
 
-
 #MBSS 5.2
 def SNMP_ASL_CHECK(host, username, password):
     ssh_client, shell = connect_to_router(host, username, password)
@@ -133,7 +132,6 @@ def SNMP_ASL_CHECK(host, username, password):
     output = shell.recv(65536).decode()
     ssh_client.close()
     return 'Acl: 2001' in output
-
 
 #MBSS 5.3
 def correct_SNMP_version_check(host, username, password):
@@ -146,8 +144,220 @@ def correct_SNMP_version_check(host, username, password):
     ssh_client.close()
     return 'SNMPv3' in output
 
-results = []
+#MBSS 6.1
+def telnet_disable_check(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include telnet\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'undo telnet server enable' in output
 
+#MBSS 6.2
+def snmp_v3_on(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include snmp-agent sys-info version\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'snmp-agent sys-info version v3' in output
+
+#MBSS 6.3
+def snmp_ssh_on(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display ssh server status | include SSH server keepalive\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'Enable' in output
+
+#MBSS 7.1
+def ip_routing(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display ip routing-table\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return '192.168.1.0/24' in output
+
+
+#MBSS 7.2
+def acl_rules(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display acl 2001\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'Basic ACL 2001, 3 rules' in output
+
+#MBSS 8.1
+def vlan_setup(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display vlan\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'The total number of vlans is' in output
+
+#MBSS 9.1
+def vlan_setup(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display vlan\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'The total number of vlans is' in output
+
+#MBSS 10.1
+def wlan_psk_security(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display wlan\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'WLAN' in output
+
+#MBSS 11.1
+def acl_rule_permit(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display acl 2001\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'permit source 192.168.32.1 0' in output
+
+
+#MBSS 12.1
+def supression_check(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display interface Ethernet1/0/0 | include Unicast\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'Unicast' in output
+
+
+#MBSS 13.1
+def sha256_check(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display this\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'authentication-mode hmac-sha256' in output
+
+#MBSS 13.2
+def acl_rules_all_3(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display acl all\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'Basic ACL 2001, 3 rules' in output
+
+#MBSS 14.1
+def log_host_check(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display info-center\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'channel name loghost' in output
+
+#MBSS 14.2
+def transport_ssl_policy(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display info-center\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'transport tcp ssl-policy' in output
+
+#MBSS 14.3
+def acl_rules_all_2001(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display acl allr\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'Basic ACL 2001, 3 rules' in output
+
+#MBSS 15.1
+def hwtacacs_cipher_setup(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration configuration | include hwtacacs\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'hwtacacs server shared-key cipher' in output
+
+
+#MBSS 16.1
+def arp_mac_validate(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include arp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'arp validate source-mac' in output
+
+#MBSS 16.2
+def arp_static_validate(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include arp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'arp static' in output
+
+#MBSS 16.3
+def arp_expiry_validate(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include arp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'arp expire-time' in output
+
+results = []
 
 # MBSS 2.1
 auth_result = check_ssh_authentication_type(host, username, password)
@@ -248,7 +458,6 @@ results.append({
 })
 print(f"Check Passed: MFA is set on the SNMP Radius Server." if mfa_result_snmp else "Check Failed: MFA is not set on the SNMP Radius Server (NEEDS PHYSICAL SERVER AND MANUAL INTERVENTION).")
 
-
 #MBSS 5.1
 snmp_sha_check = correct_SNMP_auth_check(host, username, password)
 results.append({
@@ -282,8 +491,222 @@ results.append({
 })
 print(f"Check Passed: SNMP Server is V3." if snmp_version else "Check Failed: SNMP Server is not V3.")
 
+#MBSS 6.1
+telnet_check = telnet_disable_check(host, username, password)
+results.append({
+    'Serial Number': 16,
+    'Category' : 'Management Pane : MPAC',
+    'Objective': 'Check Telnet is disable.',
+    'Comments': 'TELNET is disable' if telnet_check else 'TELNET is not diable',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: TELNET is disable." if telnet_check else "Check Failed: TELNET is enabled.")
+
+#MBSS 6.2
+telnet_check = snmp_v3_on(host, username, password)
+results.append({
+    'Serial Number': 17,
+    'Category' : 'Management Pane : MPAC',
+    'Objective': 'Check Telnet is disable.',
+    'Comments': 'TELNET is disable' if telnet_check else 'TELNET is not diable',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: TELNET is disable." if telnet_check else "Check Failed: TELNET is enabled.")
+
+#MBSS 6.3
+telnet_check = snmp_ssh_on(host, username, password)
+results.append({
+    'Serial Number': 18,
+    'Category' : 'Management Pane : MPAC',
+    'Objective': 'Check SSH is enable.',
+    'Comments': 'SSH is Enable' if telnet_check else 'SSH is diable',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: SSH is Enable." if telnet_check else "Check Failed: SSH is diable.")
+
+#MBSS 7.1
+telnet_check = ip_routing(host, username, password)
+results.append({
+    'Serial Number': 19,
+    'Category' : 'Control Plane : Local Attack Defense',
+    'Objective': 'Check IP Router Table.',
+    'Comments': 'IP Router is enable' if telnet_check else 'No IP router not enable',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: IP Router is enable." if telnet_check else "Check Failed: IP Router is not enable.")
+
+#MBSS 7.2
+telnet_check = ip_routing(host, username, password)
+results.append({
+    'Serial Number': 20,
+    'Category' : 'Control Plane : Local Attack Defense',
+    'Objective': 'ACL Rules.',
+    'Comments': 'ACL Rules is set' if telnet_check else 'No ACL Rules is set',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: IP Router is enable." if telnet_check else "Check Failed: IP Router is not enable.")
+
+#MBSS 8.1
+telnet_check = vlan_setup(host, username, password)
+results.append({
+    'Serial Number': 21,
+    'Category' : 'Control Plane : Attack Defense Through Service and Management Isolation',
+    'Objective': 'VLAN Setup.',
+    'Comments': 'VLAN is set up' if telnet_check else 'No VLAN is set up',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: VLAN is setup." if telnet_check else "Check Failed: VLAN is not setup.")
+
+#MBSS 9.1
+telnet_check = vlan_setup(host, username, password)
+results.append({
+    'Serial Number': 22,
+    'Category' : 'Control Plane : Attack Defense Through Service and Management Isolation',
+    'Objective': 'VLAN Setup.',
+    'Comments': 'VLAN is set up' if telnet_check else 'No VLAN is set up',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: VLAN is setup." if telnet_check else "Check Failed: VLAN is not setup.")
+
+#MBSS 10.1
+telnet_check = wlan_psk_security(host, username, password)
+results.append({
+    'Serial Number': 23,
+    'Category' : 'Control Plane : Wireless User Access Security',
+    'Objective': 'WLAN Setup.',
+    'Comments': 'WLAN is set up Still need manual intervention' if telnet_check else 'WLAN Security is not setup Need physical hardware and Manual Checkup',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: WLAN is setup." if telnet_check else "Check Failed: WLAN is not setup Need physical hardware and Manual Checkup.")
+
+#MBSS 11.1
+telnet_check = acl_rule_permit(host, username, password)
+results.append({
+    'Serial Number': 24,
+    'Category' : 'Forwarding Plane : ACL',
+    'Objective': 'ACL 2001 Permit.',
+    'Comments': 'ACL 2001 Permit it set.' if telnet_check else 'ACL 2001 Permit is not set.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: ACL 2001 Permit." if telnet_check else "Check Failed: ACL 2001 Permit not set.")
+
+#MBSS 12.1
+telnet_check = supression_check(host, username, password)
+results.append({
+    'Serial Number': 25,
+    'Category' : 'Forwarding Plane : Traffic Suppression and Storm Control',
+    'Objective': 'Check UNICAST in Ethernet.',
+    'Comments': 'UNICAST is setpup.' if telnet_check else 'UNICAST is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: UNICAST Permit is set." if telnet_check else "Check Failed: UNICAST permit it not set.")
+
+#MBSS 13.1
+telnet_check = supression_check(host, username, password)
+results.append({
+    'Serial Number': 26,
+    'Category' : 'Forwarding Plane : Trusted Path-based Forwarding',
+    'Objective': 'Check if SHA256.',
+    'Comments': 'SHA256 is setup.' if telnet_check else 'SHA256 is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: SHA256 is setup." if telnet_check else "Check Failed: SHA256 is not setup.")
+
+#MBSS 13.2
+telnet_check = supression_check(host, username, password)
+results.append({
+    'Serial Number': 27,
+    'Category' : 'Forwarding Plane : Trusted Path-based Forwarding',
+    'Objective': 'Check if All ACL rules as set.',
+    'Comments': 'ACL Rules is setup.' if telnet_check else 'ACL Rules is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: ACL Rule is setup." if telnet_check else "Check Failed: ACL Rule is not setup.")
+
+#MBSS 14.1
+telnet_check = log_host_check(host, username, password)
+results.append({
+    'Serial Number': 28,
+    'Category' : 'Management Pane : Information Center Security',
+    'Objective': 'Check if loghost is set.',
+    'Comments': 'Loghost is setup.' if telnet_check else 'Loghost is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: Loghost is setup." if telnet_check else "Check Failed: Loghost is not setup.")
+
+#MBSS 14.2
+telnet_check = transport_ssl_policy(host, username, password)
+results.append({
+    'Serial Number': 29,
+    'Category' : 'Management Pane : Information Center Security',
+    'Objective': 'Check if SSL Policy is set.',
+    'Comments': 'SSL Policy is setup.' if telnet_check else 'SSL Policy is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: SSL Policy is setup." if telnet_check else "Check Failed: SSL Policy not setup.")
+
+#MBSS 14.3
+telnet_check = transport_ssl_policy(host, username, password)
+results.append({
+    'Serial Number': 30,
+    'Category' : 'Management Pane : Information Center Security',
+    'Objective': 'Check if ACL Rules is set.',
+    'Comments': 'ACL Rules is setup.' if telnet_check else 'ACL Rules is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: ACL Rules is setup." if telnet_check else "Check Failed: ACL Rules not setup.")
+
+#MBSS 15.1/.2/.3
+telnet_check = transport_ssl_policy(host, username, password)
+results.append({
+    'Serial Number': 31,
+    'Category' : 'Management Pane : HWTACACS User Management Security',
+    'Objective': 'Check if HWTACACS User Management Security is set.',
+    'Comments': 'HWTACACS User Management Security is setup.' if telnet_check else 'HWTACACS User Management Security is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: HWTACACS User Management Security is setup." if telnet_check else "Check Failed: HWTACACS User Management Security not setup.")
+
+
+#MBSS 16.1
+telnet_check = arp_mac_validate(host, username, password)
+results.append({
+    'Serial Number': 32,
+    'Category' : 'Control Plane : ARP Security',
+    'Objective': 'Check if ARP MAC Validation is set.',
+    'Comments': 'ARP MAC Validation is setup.' if telnet_check else 'ARP MAC Validation is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: ARP MAC Validation is setup." if telnet_check else "Check Failed: ARP MAC Validation is not setup.")
+
+#MBSS 16.2
+telnet_check = arp_static_validate(host, username, password)
+results.append({
+    'Serial Number': 33,
+    'Category' : 'Control Plane : ARP Security',
+    'Objective': 'Check if ARP Static IP is set.',
+    'Comments': 'ARP Static IP is setup.' if telnet_check else 'ARP Static IP is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: ARP Static IP is setup." if telnet_check else "Check Failed: ARP Static IP is not setup.")
+
+#MBSS 16.3
+telnet_check = arp_expiry_validate(host, username, password)
+results.append({
+    'Serial Number': 34,
+    'Category' : 'Control Plane : ARP Security',
+    'Objective': 'Check if ARP Expiry is set.',
+    'Comments': 'ARP Expiry is setup.' if telnet_check else 'ARP Expiry is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: ARP Expiry is setup." if telnet_check else "Check Failed: ARP Expiry is not setup.")
+
+
+
 
 # Write results to CSV
+
+
 with open('compliance_report.csv', 'w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames=['Serial Number','Category','Objective','Comments', 'Compliance'])
     writer.writeheader()
