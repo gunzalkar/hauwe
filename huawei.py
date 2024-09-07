@@ -29,9 +29,9 @@ def check_ssh_authentication_type(host, username, password):
         return f"Error: {str(e)}"
 
 # Usage example
-host = '192.168.1.254'   # Replace with your router's IP
-username = 'admin'       # Replace with your username
-password = 'password'    # Replace with your password
+host = '192.168.1.250'   # Replace with your router's IP
+username = 'kshitij'       # Replace with your username
+password = 'Password@1234'    # Replace with your password
 
 result = check_ssh_authentication_type(host, username, password)
 print(result)
