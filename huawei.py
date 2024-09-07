@@ -1,43 +1,42 @@
-from netmiko import ConnectHandler
+import paramiko
 
 def check_ssh_authentication_type(host, username, password):
-    # Define Huawei router connection details
-    huawei_router = {
-        'device_type': 'huawei',
-        'host': host,
-        'username': username,
-        'password': password,
-        'global_delay_factor': 2,  # Adjust if there's a delay issue
-    }
-
-    connection = None
     try:
-        # Establish an SSH connection to the Huawei router
-        connection = ConnectHandler(**huawei_router)
+        # Establish an SSH connection using Paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(host, username=username, password=password)
 
-        # Explicitly set the expected prompt as <Huawei>
-        connection.send_command('system-view', expect_string=r'<Huawei>')
-        
+        # Start an interactive shell session
+        shell = ssh.invoke_shell()
+
+        # Enter system-view mode
+        shell.send('system-view\n')
+        shell.recv(1000)  # Receive any initial output
+
         # Run the command to display SSH user configurations
-        command = 'display current-configuration | include ssh user'
-        output = connection.send_command(command, expect_string=r'<Huawei>')
+        shell.send('display current-configuration | include ssh user\n')
+        output = ""
+        while not output.endswith('<Huawei>'):
+            output += shell.recv(1000).decode('utf-8')
 
         # Check for "authentication-type password" in the output
         if 'authentication-type password' in output:
-            return 'Compliant'
-        return 'Non-Compliant'
+            result = 'Compliant'
+        else:
+            result = 'Non-Compliant'
+
+        # Close the SSH connection
+        ssh.close()
+        return result
 
     except Exception as e:
         return f"Error: {str(e)}"
-    finally:
-        # Disconnect if the connection was successfully established
-        if connection:
-            connection.disconnect()
 
 # Usage example
-host = '192.168.1.250'   
-username = 'kshitij'      
-password = 'Password@1234'  
+host = '192.168.1.250'
+username = 'kshitij'
+password = 'Password@1234'
 
 result = check_ssh_authentication_type(host, username, password)
 print(result)
