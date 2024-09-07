@@ -14,12 +14,12 @@ def check_ssh_authentication_type(host, username, password):
         # Establish an SSH connection to the Huawei router
         connection = ConnectHandler(**huawei_router)
         
-        # Enter system-view mode
-        connection.send_command('system-view')
+        # Enter system-view mode, expect "<Huawei>" prompt after the command
+        connection.send_command('system-view', expect_string='<Huawei>')
         
-        # Run the command to display SSH user configurations
+        # Run the command to display SSH user configurations, expect the prompt again
         command = 'display current-configuration | include ssh user'
-        output = connection.send_command(command)
+        output = connection.send_command(command, expect_string='<Huawei>')
 
         # Check for "authentication-type password" in the output
         if 'authentication-type password' in output:
