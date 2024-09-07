@@ -33,28 +33,29 @@ host = '192.168.1.250'
 username = 'kshitij'
 password = 'Password@1234'
 
-result = []
+results = []
 
-result = check_ssh_authentication_type(host, username, password)
-print(f"Check Passed: SSH authentication type is correctly set." if result else "Check Failed: SSH authentication type is not correctly set.")
-results = [{
+# Check SSH Authentication Type
+auth_result = check_ssh_authentication_type(host, username, password)
+results.append({
     'Serial Number': 1,
     'Objective': 'Check if SSH authentication type is password.',
-    'Result': 'Pass' if result else 'Fail',
-    'Compliance': 'Compliant' if result else 'Non-Compliant'
-}]
-print(results)
+    'Result': 'Pass' if auth_result else 'Fail',
+    'Compliance': 'Compliant' if auth_result else 'Non-Compliant'
+})
+print(f"Check Passed: SSH authentication type is correctly set." if auth_result else "Check Failed: SSH authentication type is not correctly set.")
 
-result = check_password_irreversible_cipher(host, username, password)
-print(f"Check Passed: Password is set with irreversible cipher." if result else "Check Failed: Password is not set with irreversible cipher.")
+# Check Password Irreversible Cipher
+cipher_result = check_password_irreversible_cipher(host, username, password)
 results.append({
     'Serial Number': 2,
     'Objective': 'Check if password is set with irreversible cipher.',
-    'Result': 'Pass' if result else 'Fail',
-    'Compliance': 'Compliant' if result else 'Non-Compliant'
+    'Result': 'Pass' if cipher_result else 'Fail',
+    'Compliance': 'Compliant' if cipher_result else 'Non-Compliant'
 })
-print(results)
+print(f"Check Passed: Password is set with irreversible cipher." if cipher_result else "Check Failed: Password is not set with irreversible cipher.")
 
+# Write results to CSV
 with open('compliance_report.csv', 'w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames=['Serial Number', 'Objective', 'Result', 'Compliance'])
     writer.writeheader()
