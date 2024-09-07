@@ -20,15 +20,16 @@ def check_ssh_authentication_type(host, username, password):
         command = 'display current-configuration | include ssh user'
         output = connection.send_command(command)
 
-        # Check if the output contains 'authentication-type password'
+        # Check for "authentication-type password" in the output
         if 'authentication-type password' in output:
             return 'Compliant'
         return 'Non-Compliant'
 
     except Exception as e:
         return f"Error: {str(e)}"
+    finally:
+        connection.disconnect()
 
-# Usage example
 host = '192.168.1.250'   # Replace with your router's IP
 username = 'kshitij'       # Replace with your username
 password = 'Password@1234'    # Replace with your password
