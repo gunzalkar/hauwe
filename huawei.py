@@ -19,6 +19,7 @@ def check_ssh_authentication_type(host, username, password):
         output = ""
         while not output.endswith('<Huawei>'):
             output += shell.recv(1000).decode('utf-8')
+            print(output)
 
         # Check for "authentication-type password" in the output
         if 'authentication-type password' in output:
