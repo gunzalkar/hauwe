@@ -1169,6 +1169,18 @@ results.append({
 })
 print(f"Check Passed: Easy Deploy security is set up." if telnet_check else "Check Failed: Easy Deploy security is not set up (THIS FUNCTION MAY BE NOT AVAILABLE IN ALL DEVICES)")
 
+#MBSS 27.1
+telnet_check = Defense_Against_ICMPv6_Attacks(host, username, password)
+results.append({
+    'Serial Number': 55,
+    'Category' : 'Control Plane : Defense Against ICMPv6 Attacks',
+    'Objective': 'Defence against ICMPv6 attacks.',
+    'Comments': 'Defence against ICMPv6 attacks is set up.' if telnet_check else 'Defence against ICMPv6 attacks is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: Defence against ICMPv6 attacks is set up." if telnet_check else "Check Failed: Defence against ICMPv6 attacks is not set up.")
+
+
 
 # Write results to CSV
 
