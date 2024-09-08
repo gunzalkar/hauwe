@@ -212,15 +212,15 @@ def vlan_setup(host, username, password):
     return 'The total number of vlans is' in output
 
 #MBSS 9.1
-def vlan_setup(host, username, password):
+def igmp_setup(host, username, password):
     ssh_client, shell = connect_to_router(host, username, password)
     shell.send('system-view\n')
     time.sleep(1)
-    shell.send('display vlan\n')
+    shell.send('display current-configuration | include igmp\n')
     time.sleep(1)
     output = shell.recv(65536).decode()
     ssh_client.close()
-    return 'The total number of vlans is' in output
+    return 'igmp-snooping enable' in output
 
 #MBSS 10.1
 def wlan_psk_security(host, username, password):
@@ -323,7 +323,6 @@ def hwtacacs_cipher_setup(host, username, password):
     ssh_client.close()
     return 'hwtacacs server shared-key cipher' in output
 
-
 #MBSS 16.1
 def arp_mac_validate(host, username, password):
     ssh_client, shell = connect_to_router(host, username, password)
@@ -356,6 +355,243 @@ def arp_expiry_validate(host, username, password):
     output = shell.recv(65536).decode()
     ssh_client.close()
     return 'arp expire-time' in output
+
+#MBSS 17.1
+def dhcp_server(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include dhcp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'dhcp server database enable' in output
+
+#MBSS 18.1
+def bgp_configuration(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration configuration bgp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'bgp 100' in output
+
+#MBSS 18.2
+def bgp_router_policy_check(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display bgp peer verbose\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'Export route policy is' in output
+
+ 
+#MBSS 18.3
+def bgp_keep_alive(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display bgp peer verbose\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return '30 seconds' in output
+
+#MBSS 19.1
+def keychain(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include key-cha\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'authentication key-chain all name kc1' in output
+
+#MBSS 19.2
+def mpls_ldp(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include mpls\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'mpls ldp' in output
+
+# MBSS 19.3
+def mpls_vpn_instance(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display ip vpn-instance\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+
+    # Extract the number of configured VPN instances
+    for line in output.splitlines():
+        if 'Total VPN-Instances configured' in line:
+            vpn_count = int(line.split(':')[-1].strip())
+            return vpn_count >= 1
+    return False
+
+#MBSS 20.1
+def igmp_snooping(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include igmp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'igmp-snooping enable' in output
+
+#MBSS 20.2
+def igmp_group_policy(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include igmp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'igmp-snooping group-policy 2000' in output
+
+#MBSS 20.3
+def acl_rule_2000_verification(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display acl 2000\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'rule 5 permit source 225.0.0.0 0.0.0.255' in output
+
+#MBSS 21.1
+def dhcp_snooping_enable(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include dhcp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'dhcp snooping enable' in output
+
+#MBSS 21.2
+def dhcp_snooping_trusted(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include dhcp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'dhcp snooping trusted' in output
+
+#MBSS 21.3
+def ntp_authentication_enable(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration | include ntp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'ntp-service authentication enable' in output
+
+#MBSS 22.1
+def ntp_key_id(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration  | include ntp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'authentication-keyid 10' in output
+
+#MBSS 23.1
+def stp_bpdu_root(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration  | include stp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'stp root-protection' in output
+
+#MBSS 23.2
+def stp_bpdu(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration  | include stp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'stp bpdu-filter enable' in output
+
+#MBSS 23.3
+def stp_bpdu_transmit_limit(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display stp global\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+
+
+    # Extract the number of configured VPN instances
+    for line in output.splitlines():
+        if 'Transmit-limit' in line:
+            vpn_count = int(line.split(':')[-1].strip())
+            return vpn_count <= 30
+    return False
+
+
+#MBSS 24.1
+def vrrp_authentication(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration  | include vrrp\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'authentication-mode md5' in output
+
+
+#MBSS 25.1
+def easy_deploy(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration  | include easydeploy\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'password' or 'cipher'in output
+
+#MBSS 26.1
+def easy_deploy_security(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration  | include easydeploy\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'shared-key cipher' in output
+
 
 results = []
 
@@ -507,11 +743,11 @@ telnet_check = snmp_v3_on(host, username, password)
 results.append({
     'Serial Number': 17,
     'Category' : 'Management Pane : MPAC',
-    'Objective': 'Check Telnet is disable.',
-    'Comments': 'TELNET is disable' if telnet_check else 'TELNET is not diable',
+    'Objective': 'Check SNMP V3 is enable.',
+    'Comments': 'SNMP V3 is enable' if telnet_check else 'SNMP V3 is not enable',
     'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
 })
-print(f"Check Passed: TELNET is disable." if telnet_check else "Check Failed: TELNET is enabled.")
+print(f"Check Passed: SNMP V3 is enable." if telnet_check else "Check Failed: SNMP V3 is not enable.")
 
 #MBSS 6.3
 telnet_check = snmp_ssh_on(host, username, password)
@@ -536,7 +772,7 @@ results.append({
 print(f"Check Passed: IP Router is enable." if telnet_check else "Check Failed: IP Router is not enable.")
 
 #MBSS 7.2
-telnet_check = ip_routing(host, username, password)
+telnet_check = acl_rules(host, username, password)
 results.append({
     'Serial Number': 20,
     'Category' : 'Control Plane : Local Attack Defense',
@@ -544,7 +780,7 @@ results.append({
     'Comments': 'ACL Rules is set' if telnet_check else 'No ACL Rules is set',
     'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
 })
-print(f"Check Passed: IP Router is enable." if telnet_check else "Check Failed: IP Router is not enable.")
+print(f"Check Passed: ACL Rules is set." if telnet_check else "Check Failed: No ACL Rules is set.")
 
 #MBSS 8.1
 telnet_check = vlan_setup(host, username, password)
@@ -558,15 +794,15 @@ results.append({
 print(f"Check Passed: VLAN is setup." if telnet_check else "Check Failed: VLAN is not setup.")
 
 #MBSS 9.1
-telnet_check = vlan_setup(host, username, password)
+telnet_check = igmp_setup(host, username, password)
 results.append({
     'Serial Number': 22,
     'Category' : 'Control Plane : Attack Defense Through Service and Management Isolation',
-    'Objective': 'VLAN Setup.',
-    'Comments': 'VLAN is set up' if telnet_check else 'No VLAN is set up',
+    'Objective': 'IGMP is Setup.',
+    'Comments': 'IGMP is set up' if telnet_check else 'IGMP is not set up',
     'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
 })
-print(f"Check Passed: VLAN is setup." if telnet_check else "Check Failed: VLAN is not setup.")
+print(f"Check Passed: IGMP is set up." if telnet_check else "Check Failed: IGMP is not set up.")
 
 #MBSS 10.1
 telnet_check = wlan_psk_security(host, username, password)
@@ -667,7 +903,6 @@ results.append({
 })
 print(f"Check Passed: HWTACACS User Management Security is setup." if telnet_check else "Check Failed: HWTACACS User Management Security not setup.")
 
-
 #MBSS 16.1
 telnet_check = arp_mac_validate(host, username, password)
 results.append({
@@ -701,7 +936,227 @@ results.append({
 })
 print(f"Check Passed: ARP Expiry is setup." if telnet_check else "Check Failed: ARP Expiry is not setup.")
 
+#MBSS 17.1
+telnet_check = dhcp_server(host, username, password)
+results.append({
+    'Serial Number': 35,
+    'Category' : 'Control Plane : DHCP Security',
+    'Objective': 'Check if DHCP Server is set.',
+    'Comments': 'DHCP Server is setup.' if telnet_check else 'DHCP Server is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: DHCP Server is setup." if telnet_check else "Check Failed: DHCP is not setup.")
 
+#MBSS 18.1
+telnet_check = bgp_configuration(host, username, password)
+results.append({
+    'Serial Number': 36,
+    'Category' : 'Control Plane : Routing Protocol Security',
+    'Objective': 'Check if BGP is set.',
+    'Comments': 'BGP is setup.' if telnet_check else 'BGP is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: BGP is setup." if telnet_check else "Check Failed: BGP not setup.")
+
+#MBSS 18.2
+telnet_check = bgp_keep_alive(host, username, password)
+results.append({
+    'Serial Number': 37,
+    'Category' : 'Control Plane : Routing Protocol Security',
+    'Objective': 'Check if BGP Route Policy is set.',
+    'Comments': 'BGP Route Policy is setup.' if telnet_check else 'BGP Route Policy is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: BGP Route Policy is setup." if telnet_check else "Check Failed: BGP Route Policy not setup.")
+
+#MBSS 18.3
+telnet_check = bgp_keep_alive(host, username, password)
+results.append({
+    'Serial Number': 38,
+    'Category' : 'Control Plane : Routing Protocol Security',
+    'Objective': 'Check if BGP timer is set.',
+    'Comments': 'BGP timer is setup.' if telnet_check else 'BGP timer is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: BGP timer is setup." if telnet_check else "Check Failed: BGP timer not setup.")
+
+#MBSS 19.1
+telnet_check = keychain(host, username, password)
+results.append({
+    'Serial Number': 39,
+    'Category' : 'Control Plane : MPLS Security',
+    'Objective': 'Check if Key Chain is set.',
+    'Comments': 'Key Chain is setup.' if telnet_check else 'Key Chain is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: Key Chain is setup." if telnet_check else "Check Failed: Key Chain not setup.")
+
+#MBSS 19.2
+telnet_check = mpls_ldp(host, username, password)
+results.append({
+    'Serial Number': 40,
+    'Category' : 'Control Plane : MPLS Security',
+    'Objective': 'Check if MPLS LDP is set.',
+    'Comments': 'MPLS LDP is setup.' if telnet_check else 'MPLS LDP is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: MPLS LDP is setup." if telnet_check else "Check Failed: MPLS LDP is not set up.")
+
+#MBSS 19.3
+telnet_check = mpls_vpn_instance(host, username, password)
+results.append({
+    'Serial Number': 41,
+    'Category' : 'Control Plane : MPLS Security',
+    'Objective': 'Check if MPLS VPN Instance is set.',
+    'Comments': 'MPLS VPN Instance is setup.' if telnet_check else 'MPLS VPN Instance is not set up.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: VPN Instance is setup." if telnet_check else "Check Failed: VPN Instance not setup.")
+
+#MBSS 20.1
+telnet_check = igmp_snooping(host, username, password)
+results.append({
+    'Serial Number': 42,
+    'Category' : 'Control Plane : Multicast Security',
+    'Objective': 'IGMP Snooping is Setup.',
+    'Comments': 'IGMP Snooping is set up' if telnet_check else 'IGMP Snooping is not set up',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: IGMP Snooping is set up." if telnet_check else "Check Failed: IGMP Snooping is not set up.")
+
+#MBSS 20.2
+telnet_check = igmp_group_policy(host, username, password)
+results.append({
+    'Serial Number': 43,
+    'Category' : 'Control Plane : Multicast Security',
+    'Objective': 'IGMP Snooping Group Policy is Setup.',
+    'Comments': 'IGMP Snooping Group Policy is set up' if telnet_check else 'IGMP Snooping Group Policy is not set up',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: IGMP Snooping Group Policy is set up." if telnet_check else "Check Failed: IGMP Snooping Group Policy is not set up.")
+
+#MBSS 20.3
+telnet_check = acl_rule_2000_verification(host, username, password)
+results.append({
+    'Serial Number': 44,
+    'Category' : 'Control Plane : Multicast Security',
+    'Objective': 'ACL Rule 2000.',
+    'Comments': 'ACL Rule 2000 is set up' if telnet_check else 'ACL Rule 2000 is not set up',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: ACL Rule 2000 is set up." if telnet_check else "Check Failed: ACL Rule 2000 is not set up.")
+
+#MBSS 21.1
+telnet_check = dhcp_snooping_enable(host, username, password)
+results.append({
+    'Serial Number': 45,
+    'Category' : 'Control Plane : SVF System Security',
+    'Objective': 'DHCP Snooping Enable.',
+    'Comments': 'DHCP Snooping set up' if telnet_check else 'DHCP Snooping is not set up',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: DHCP Snooping is set up." if telnet_check else "Check Failed: DHCP Snooping is not set up.")
+
+#MBSS 21.2
+telnet_check = dhcp_snooping_trusted(host, username, password)
+results.append({
+    'Serial Number': 46,
+    'Category' : 'Control Plane : SVF System Security',
+    'Objective': 'DHCP Snooping Trusted to a network.',
+    'Comments': 'DHCP Snooping Trusted to a network.' if telnet_check else 'DHCP Snooping is not Trusted to a network.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: DHCP Snooping Trusted to a network." if telnet_check else "Check Failed: DHCP Snooping is not Trusted to a network.")
+
+#MBSS 21.3
+telnet_check = ntp_authentication_enable(host, username, password)
+results.append({
+    'Serial Number': 47,
+    'Category' : 'Control Plane : SVF System Security',
+    'Objective': 'NTP Authentication is enable.',
+    'Comments': 'NTP Authentication is enable.' if telnet_check else 'NTP Authentication is not enable.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: NTP Authentication is enable." if telnet_check else "Check Failed: NTP Authentication is not enable.")
+
+#MBSS 22.1
+telnet_check = ntp_key_id(host, username, password)
+results.append({
+    'Serial Number': 48,
+    'Category' : 'Control Plane : NTP Security',
+    'Objective': 'NTP Key ID.',
+    'Comments': 'NTP Key ID is set.' if telnet_check else 'NTP Key ID is not set.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: NTP Key ID is set." if telnet_check else "Check Failed: NTP Key ID is not set.")
+
+
+#MBSS 23.1
+telnet_check = stp_bpdu_root(host, username, password)
+results.append({
+    'Serial Number': 49,
+    'Category' : 'Control Plane : MSTP Security',
+    'Objective': 'STP root protection in set up.',
+    'Comments': 'STP root protection is set up.' if telnet_check else 'STP root protection not set.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: STP root protection  is set up." if telnet_check else "Check Failed: STP root protection is not set.")
+# Write results to CSV
+
+#MBSS 23.2
+telnet_check = stp_bpdu(host, username, password)
+results.append({
+    'Serial Number': 50,
+    'Category' : 'Control Plane : MSTP Security',
+    'Objective': 'STP BPDU is set up.',
+    'Comments': 'STP BPDU is set up.' if telnet_check else 'STP BPDU is not set.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: STP BPDU is set up." if telnet_check else "Check Failed: STP BPDU is not set.")
+
+#MBSS 23.3
+telnet_check = stp_bpdu(host, username, password)
+results.append({
+    'Serial Number': 51,
+    'Category' : 'Control Plane : MSTP Security',
+    'Objective': 'Transmit Limit for BPDU is properly set up.',
+    'Comments': 'Transmit Limit for BPDU is properly set up.' if telnet_check else 'Transmit Limit for BPDU is properly not set.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: Transmit Limit for BPDU is properly set up." if telnet_check else "Check Failed: Transmit Limit for BPDU is properly not set.")
+
+#MBSS 24.1
+telnet_check = stp_bpdu(host, username, password)
+results.append({
+    'Serial Number': 52,
+    'Category' : 'Control Plane : VRRP Security',
+    'Objective': 'VRRP authention MD5.',
+    'Comments': 'VRRP authention is set up to MD5.' if telnet_check else 'VRRP authention is not set up to MD5.',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: VRRP authention is set up to MD5." if telnet_check else "Check Failed: VRRP authention is not set up to MD5.")
+
+#MBSS 25.1
+telnet_check = easy_deploy(host, username, password)
+results.append({
+    'Serial Number': 53,
+    'Category' : 'Control Plane : E-Trunk Security',
+    'Objective': 'Easy Deploy Function.',
+    'Comments': 'Easy Deploy has proper authentication set up.' if telnet_check else 'Easy Deploy has no proper authentication set up (THIS FUNCTION MAY BE NOT AVAILABLE IN ALL DEVICES).',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: Easy Deploy has proper authentication set up." if telnet_check else "Check Failed: Easy Deploy has no proper authentication set up (THIS FUNCTION MAY BE NOT AVAILABLE IN ALL DEVICES)")
+
+#MBSS 26.1
+telnet_check = easy_deploy_security(host, username, password)
+results.append({
+    'Serial Number': 54,
+    'Category' : 'Control Plane : EasyDeploy System Security',
+    'Objective': 'Easy Deploy Function security.',
+    'Comments': 'Easy Deploy security is set up.' if telnet_check else 'Easy Deploy security is not set up (THIS FUNCTION MAY BE NOT AVAILABLE IN ALL DEVICES).',
+    'Compliance': 'Compliant' if telnet_check else 'Non-Compliant'
+})
+print(f"Check Passed: Easy Deploy security is set up." if telnet_check else "Check Failed: Easy Deploy security is not set up (THIS FUNCTION MAY BE NOT AVAILABLE IN ALL DEVICES)")
 
 
 # Write results to CSV
