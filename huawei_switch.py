@@ -1,16 +1,47 @@
 import paramiko # type: ignore
 import time
 import csv
+import ast
 
-host = '192.168.1.250'
-username = 'kshitij'
-password = 'Password@1234'
+def load_config(file_path):
+    config = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if not line or '=' not in line:
+                continue  # Skip empty lines or lines without '='
+            key, value = line.split('=', 1)
+            value = value.strip("'")  # Remove surrounding quotes
+
+            # Check if the value is a list (e.g., ['10', '20', '30'])
+            if value.startswith('[') and value.endswith(']'):
+                config[key] = ast.literal_eval(value)
+            else:
+                config[key] = value
+    return config
+
+config = load_config('config.txt')
+
+host = config.get('HOST')
+username = config.get('USERNAME')
+password = config.get('PASSWORD')
 
 def connect_to_router(host, username, password):
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh_client.connect(host, username=username, password=password)
     return ssh_client, ssh_client.invoke_shell()
+
+#MBSS 1.1
+def check_certificates(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display certificate\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'certificate' in output
 
 # MBSS 2.1
 def check_ssh_authentication_type(host, username, password):
@@ -611,7 +642,7 @@ def defence_route_options(host, username, password):
     time.sleep(1)
     output = shell.recv(65536).decode()
     ssh_client.close()
-    return '' in output
+    return 'discard rr' in output
 
 #################
 #MBSS 29.1
@@ -695,10 +726,21 @@ def port_security_mac(host, username, password):
 
 results = []
 
+# MBSS 1.1
+auth_result = check_ssh_authentication_type(host, username, password)
+results.append({
+    'Serial Number': 1,
+    'Category' : 'Management Pane : Digital Certificate Management',
+    'Objective': 'Digital Certificate Management.',
+    'Comments': 'Digital Certificate are Setup (Manual Check suggested)' if auth_result else 'Digital Certificate are not Setup (Manual Check Needed)',
+    'Compliance': 'Compliant' if auth_result else 'Non-Compliant'
+})
+print(f"Check Passed: Digital Certificate are Setup (Manual Check suggested)." if auth_result else "Check Failed: Digital Certificate are not Setup (Manual Check Needed).")
+
 # MBSS 2.1
 auth_result = check_ssh_authentication_type(host, username, password)
 results.append({
-    'Serial Number': 4,
+    'Serial Number': 2,
     'Category' : 'Management Pane : Device Login Security',
     'Objective': 'Check if SSH authentication type is password.',
     'Comments': 'Login via password' if auth_result else 'Login not set',
@@ -709,7 +751,7 @@ print(f"Check Passed: SSH authentication type is correctly set." if auth_result 
 # MBSS 2.2
 cipher_result = check_password_irreversible_cipher(host, username, password)
 results.append({
-    'Serial Number': 5,
+    'Serial Number': 3,
     'Category' : 'Management Pane : Device Login Security',
     'Objective': 'Check if password is set with irreversible cipher.',
     'Comments': 'Password set via irreversible cipher' if cipher_result else 'Password not set via irreversible cipher',
@@ -720,7 +762,7 @@ print(f"Check Passed: Password is set with irreversible cipher." if cipher_resul
 # MBSS 2.3
 mfa_result = multi_factor_authentiction(host, username, password)
 results.append({
-    'Serial Number': 6,
+    'Serial Number': 4,
     'Category' : 'Management Pane : Device Login Security',
     'Objective': 'Check if Multi Factor Authentication is set.',
     'Comments': 'MFA is set on Server' if mfa_result else 'MFA is not set on the Radius Server (NEEDS PHYSICAL SERVER AND MANUAL INTERVENTION)',
@@ -731,7 +773,7 @@ print(f"Check Passed: MFA is set on the Radius Server." if mfa_result else "Chec
 #MBSS 3.1
 encryption_result = check_encryption_setting(host, username, password)
 results.append({
-    'Serial Number': 7,
+    'Serial Number': 5,
     'Category': 'Management Pane : AAA User Management Security',
     'Objective': 'Check if encryption setting includes AES 256.',
     'Comments': 'Encryption setting includes AES 256' if encryption_result else 'Encryption setting does not include AES 256',
@@ -744,7 +786,7 @@ print(f"Check Passed: Encryption setting includes AES 256." if encryption_result
 retry_result = block_fail_interval_check(host, username, password)
 
 results.append({
-    'Serial Number': 8,
+    'Serial Number': 6,
     'Category': 'Management Pane : AAA User Management Security',
     'Objective': 'Check if password has Fail and Retry interval set check enable.',
     'Comments': 'maximum number of consecutive authentication failures is 3, and the account locking period is 5 minutes. ' if retry_result else 'Retry and Lockin interval not set according to compilance',
@@ -755,7 +797,7 @@ print(f"Check Passed: Retry interval Set." if retry_result else "Check Failed: R
 #MBSS 3.3
 priv_result = user_privilege_check(host, username, password)
 results.append({
-    'Serial Number': 9,
+    'Serial Number': 7,
     'Category': 'Management Pane : AAA User Management Security',
     'Objective': 'Check user privilege level.',
     'Comments': 'User has appropriate privilege level.' if priv_result else 'User does not has appropriate privilege level.',
@@ -766,7 +808,7 @@ print(f"Check Passed: User has appropriate privilege level." if priv_result else
 #MBSS 4.1
 snmp_password_result = snmp_password_check(host, username, password)
 results.append({
-    'Serial Number': 10,
+    'Serial Number': 8,
     'Category' : 'Management Pane : SNMP Device Management Security',
     'Objective': 'Check if SSH authentication type is password for SNMP.',
     'Comments': 'Login via password for SNMP' if snmp_password_result else 'Login not set for SNMP',
@@ -777,7 +819,7 @@ print(f"Check Passed: Password authentication type is correctly set for SNMP." i
 #MBSS 4.2
 complexity_result = check_encryption_setting(host, username, password)
 results.append({
-    'Serial Number': 11,
+    'Serial Number': 9,
     'Category': 'Management Pane : SNMP Device Management Security',
     'Objective': 'Check if password has complexity check enable.',
     'Comments': 'Encryption setting includes Complexity' if complexity_result else 'Encryption setting does not includes Complexity',
@@ -788,7 +830,7 @@ print(f"Check Passed: Encryption setting includes Complexity Check." if complexi
 #MBSS 4.3
 mfa_result_snmp = multi_factor_authentiction_SNMP(host, username, password)
 results.append({
-    'Serial Number': 12,
+    'Serial Number': 10,
     'Category' : 'Management Pane : SNMP Device Management Security',
     'Objective': 'Check if Multi Factor Authentication is set.',
     'Comments': 'MFA is set on SNMP Server' if mfa_result_snmp else 'MFA is not set on the Radius Server (NEEDS PHYSICAL SERVER AND MANUAL INTERVENTION)',
@@ -799,7 +841,7 @@ print(f"Check Passed: MFA is set on the SNMP Radius Server." if mfa_result_snmp 
 #MBSS 5.1
 snmp_sha_check = correct_SNMP_auth_check(host, username, password)
 results.append({
-    'Serial Number': 13,
+    'Serial Number': 11,
     'Category' : 'Management Pane : Service Plane Access Prohibition of Insecure Management Protocols',
     'Objective': 'Check if SNMP authentication-mode sha cipher is set.',
     'Comments': 'SNMP authentication-mode  set to sha cipher' if snmp_sha_check else 'SNMP authentication-mode is not set to sha cipher',
@@ -810,7 +852,7 @@ print(f"Check Passed: SNMP authentication-mode  set to sha cipher." if snmp_sha_
 #MBSS 5.2
 snmp_acl_check = SNMP_ASL_CHECK(host, username, password)
 results.append({
-    'Serial Number': 14,
+    'Serial Number': 12,
     'Category' : 'Management Pane : Service Plane Access Prohibition of Insecure Management Protocols',
     'Objective': 'Check if SNMP ACL is 2001 is set.',
     'Comments': 'SNMP ACL is set to 2001 firewall' if snmp_acl_check else 'SNMP ACL is not set to 2001 firewall',
@@ -821,7 +863,7 @@ print(f"Check Passed: SNMP ACL IS 2001." if snmp_acl_check else "Check Failed: S
 #MBSS 5.3
 snmp_version = correct_SNMP_version_check(host, username, password)
 results.append({
-    'Serial Number': 15,
+    'Serial Number': 13,
     'Category' : 'Management Pane : Service Plane Access Prohibition of Insecure Management Protocols',
     'Objective': 'Check if SNMP Version is V3 is set.',
     'Comments': 'SNMP Server is V3' if snmp_version else 'SNMP Server is not V3',
@@ -832,7 +874,7 @@ print(f"Check Passed: SNMP Server is V3." if snmp_version else "Check Failed: SN
 #MBSS 6.1
 telnet_check = telnet_disable_check(host, username, password)
 results.append({
-    'Serial Number': 16,
+    'Serial Number': 14,
     'Category' : 'Management Pane : MPAC',
     'Objective': 'Check Telnet is disable.',
     'Comments': 'TELNET is disable' if telnet_check else 'TELNET is not diable',
@@ -843,7 +885,7 @@ print(f"Check Passed: TELNET is disable." if telnet_check else "Check Failed: TE
 #MBSS 6.2
 telnet_check = snmp_v3_on(host, username, password)
 results.append({
-    'Serial Number': 17,
+    'Serial Number': 15,
     'Category' : 'Management Pane : MPAC',
     'Objective': 'Check SNMP V3 is enable.',
     'Comments': 'SNMP V3 is enable' if telnet_check else 'SNMP V3 is not enable',
@@ -854,7 +896,7 @@ print(f"Check Passed: SNMP V3 is enable." if telnet_check else "Check Failed: SN
 #MBSS 6.3
 telnet_check = snmp_ssh_on(host, username, password)
 results.append({
-    'Serial Number': 18,
+    'Serial Number': 16,
     'Category' : 'Management Pane : MPAC',
     'Objective': 'Check SSH is enable.',
     'Comments': 'SSH is Enable' if telnet_check else 'SSH is diable',
@@ -865,7 +907,7 @@ print(f"Check Passed: SSH is Enable." if telnet_check else "Check Failed: SSH is
 #MBSS 7.1
 telnet_check = ip_routing(host, username, password)
 results.append({
-    'Serial Number': 19,
+    'Serial Number': 17,
     'Category' : 'Control Plane : Local Attack Defense',
     'Objective': 'Check IP Router Table.',
     'Comments': 'IP Router is enable' if telnet_check else 'No IP router not enable',
@@ -876,7 +918,7 @@ print(f"Check Passed: IP Router is enable." if telnet_check else "Check Failed: 
 #MBSS 7.2
 telnet_check = acl_rules(host, username, password)
 results.append({
-    'Serial Number': 20,
+    'Serial Number': 18,
     'Category' : 'Control Plane : Local Attack Defense',
     'Objective': 'ACL Rules.',
     'Comments': 'ACL Rules is set' if telnet_check else 'No ACL Rules is set',
@@ -887,7 +929,7 @@ print(f"Check Passed: ACL Rules is set." if telnet_check else "Check Failed: No 
 #MBSS 8.1
 telnet_check = vlan_setup(host, username, password)
 results.append({
-    'Serial Number': 21,
+    'Serial Number': 19,
     'Category' : 'Control Plane : Attack Defense Through Service and Management Isolation',
     'Objective': 'VLAN Setup.',
     'Comments': 'VLAN is set up' if telnet_check else 'No VLAN is set up',
@@ -898,7 +940,7 @@ print(f"Check Passed: VLAN is setup." if telnet_check else "Check Failed: VLAN i
 #MBSS 9.1
 telnet_check = igmp_setup(host, username, password)
 results.append({
-    'Serial Number': 22,
+    'Serial Number': 20,
     'Category' : 'Control Plane : Attack Defense Through Service and Management Isolation',
     'Objective': 'IGMP is Setup.',
     'Comments': 'IGMP is set up' if telnet_check else 'IGMP is not set up',
@@ -909,7 +951,7 @@ print(f"Check Passed: IGMP is set up." if telnet_check else "Check Failed: IGMP 
 #MBSS 10.1
 telnet_check = wlan_psk_security(host, username, password)
 results.append({
-    'Serial Number': 23,
+    'Serial Number': 21,
     'Category' : 'Control Plane : Wireless User Access Security',
     'Objective': 'WLAN Setup.',
     'Comments': 'WLAN is set up Still need manual intervention' if telnet_check else 'WLAN Security is not setup Need physical hardware and Manual Checkup',
@@ -920,7 +962,7 @@ print(f"Check Passed: WLAN is setup." if telnet_check else "Check Failed: WLAN i
 #MBSS 11.1
 telnet_check = acl_rule_permit(host, username, password)
 results.append({
-    'Serial Number': 24,
+    'Serial Number': 22,
     'Category' : 'Forwarding Plane : ACL',
     'Objective': 'ACL 2001 Permit.',
     'Comments': 'ACL 2001 Permit it set.' if telnet_check else 'ACL 2001 Permit is not set.',
@@ -931,7 +973,7 @@ print(f"Check Passed: ACL 2001 Permit." if telnet_check else "Check Failed: ACL 
 #MBSS 12.1
 telnet_check = supression_check(host, username, password)
 results.append({
-    'Serial Number': 25,
+    'Serial Number': 23,
     'Category' : 'Forwarding Plane : Traffic Suppression and Storm Control',
     'Objective': 'Check UNICAST in Ethernet.',
     'Comments': 'UNICAST is setpup.' if telnet_check else 'UNICAST is not set up.',
@@ -942,7 +984,7 @@ print(f"Check Passed: UNICAST Permit is set." if telnet_check else "Check Failed
 #MBSS 13.1
 telnet_check = supression_check(host, username, password)
 results.append({
-    'Serial Number': 26,
+    'Serial Number': 24,
     'Category' : 'Forwarding Plane : Trusted Path-based Forwarding',
     'Objective': 'Check if SHA256.',
     'Comments': 'SHA256 is setup.' if telnet_check else 'SHA256 is not set up.',
@@ -953,7 +995,7 @@ print(f"Check Passed: SHA256 is setup." if telnet_check else "Check Failed: SHA2
 #MBSS 13.2
 telnet_check = supression_check(host, username, password)
 results.append({
-    'Serial Number': 27,
+    'Serial Number': 25,
     'Category' : 'Forwarding Plane : Trusted Path-based Forwarding',
     'Objective': 'Check if All ACL rules as set.',
     'Comments': 'ACL Rules is setup.' if telnet_check else 'ACL Rules is not set up.',
@@ -964,7 +1006,7 @@ print(f"Check Passed: ACL Rule is setup." if telnet_check else "Check Failed: AC
 #MBSS 14.1
 telnet_check = log_host_check(host, username, password)
 results.append({
-    'Serial Number': 28,
+    'Serial Number': 26,
     'Category' : 'Management Pane : Information Center Security',
     'Objective': 'Check if loghost is set.',
     'Comments': 'Loghost is setup.' if telnet_check else 'Loghost is not set up.',
@@ -975,7 +1017,7 @@ print(f"Check Passed: Loghost is setup." if telnet_check else "Check Failed: Log
 #MBSS 14.2
 telnet_check = transport_ssl_policy(host, username, password)
 results.append({
-    'Serial Number': 29,
+    'Serial Number': 27,
     'Category' : 'Management Pane : Information Center Security',
     'Objective': 'Check if SSL Policy is set.',
     'Comments': 'SSL Policy is setup.' if telnet_check else 'SSL Policy is not set up.',
@@ -986,7 +1028,7 @@ print(f"Check Passed: SSL Policy is setup." if telnet_check else "Check Failed: 
 #MBSS 14.3
 telnet_check = transport_ssl_policy(host, username, password)
 results.append({
-    'Serial Number': 30,
+    'Serial Number': 28,
     'Category' : 'Management Pane : Information Center Security',
     'Objective': 'Check if ACL Rules is set.',
     'Comments': 'ACL Rules is setup.' if telnet_check else 'ACL Rules is not set up.',
@@ -997,7 +1039,7 @@ print(f"Check Passed: ACL Rules is setup." if telnet_check else "Check Failed: A
 #MBSS 15.1/.2/.3
 telnet_check = transport_ssl_policy(host, username, password)
 results.append({
-    'Serial Number': 31,
+    'Serial Number': 29,
     'Category' : 'Management Pane : HWTACACS User Management Security',
     'Objective': 'Check if HWTACACS User Management Security is set.',
     'Comments': 'HWTACACS User Management Security is setup.' if telnet_check else 'HWTACACS User Management Security is not set up.',
@@ -1008,7 +1050,7 @@ print(f"Check Passed: HWTACACS User Management Security is setup." if telnet_che
 #MBSS 16.1
 telnet_check = arp_mac_validate(host, username, password)
 results.append({
-    'Serial Number': 32,
+    'Serial Number': 30,
     'Category' : 'Control Plane : ARP Security',
     'Objective': 'Check if ARP MAC Validation is set.',
     'Comments': 'ARP MAC Validation is setup.' if telnet_check else 'ARP MAC Validation is not set up.',
@@ -1019,7 +1061,7 @@ print(f"Check Passed: ARP MAC Validation is setup." if telnet_check else "Check 
 #MBSS 16.2
 telnet_check = arp_static_validate(host, username, password)
 results.append({
-    'Serial Number': 33,
+    'Serial Number': 31,
     'Category' : 'Control Plane : ARP Security',
     'Objective': 'Check if ARP Static IP is set.',
     'Comments': 'ARP Static IP is setup.' if telnet_check else 'ARP Static IP is not set up.',
@@ -1030,7 +1072,7 @@ print(f"Check Passed: ARP Static IP is setup." if telnet_check else "Check Faile
 #MBSS 16.3
 telnet_check = arp_expiry_validate(host, username, password)
 results.append({
-    'Serial Number': 34,
+    'Serial Number': 32,
     'Category' : 'Control Plane : ARP Security',
     'Objective': 'Check if ARP Expiry is set.',
     'Comments': 'ARP Expiry is setup.' if telnet_check else 'ARP Expiry is not set up.',
@@ -1041,7 +1083,7 @@ print(f"Check Passed: ARP Expiry is setup." if telnet_check else "Check Failed: 
 #MBSS 17.1
 telnet_check = dhcp_server(host, username, password)
 results.append({
-    'Serial Number': 35,
+    'Serial Number': 33,
     'Category' : 'Control Plane : DHCP Security',
     'Objective': 'Check if DHCP Server is set.',
     'Comments': 'DHCP Server is setup.' if telnet_check else 'DHCP Server is not set up.',
@@ -1052,7 +1094,7 @@ print(f"Check Passed: DHCP Server is setup." if telnet_check else "Check Failed:
 #MBSS 18.1
 telnet_check = bgp_configuration(host, username, password)
 results.append({
-    'Serial Number': 36,
+    'Serial Number': 34,
     'Category' : 'Control Plane : Routing Protocol Security',
     'Objective': 'Check if BGP is set.',
     'Comments': 'BGP is setup.' if telnet_check else 'BGP is not set up.',
@@ -1063,7 +1105,7 @@ print(f"Check Passed: BGP is setup." if telnet_check else "Check Failed: BGP not
 #MBSS 18.2
 telnet_check = bgp_router_policy_check(host, username, password)
 results.append({
-    'Serial Number': 37,
+    'Serial Number': 35,
     'Category' : 'Control Plane : Routing Protocol Security',
     'Objective': 'Check if BGP Route Policy is set.',
     'Comments': 'BGP Route Policy is setup.' if telnet_check else 'BGP Route Policy is not set up.',
@@ -1074,7 +1116,7 @@ print(f"Check Passed: BGP Route Policy is setup." if telnet_check else "Check Fa
 #MBSS 18.3
 telnet_check = bgp_keep_alive(host, username, password)
 results.append({
-    'Serial Number': 38,
+    'Serial Number': 36,
     'Category' : 'Control Plane : Routing Protocol Security',
     'Objective': 'Check if BGP timer is set.',
     'Comments': 'BGP timer is setup.' if telnet_check else 'BGP timer is not set up.',
@@ -1085,7 +1127,7 @@ print(f"Check Passed: BGP timer is setup." if telnet_check else "Check Failed: B
 #MBSS 19.1
 telnet_check = keychain(host, username, password)
 results.append({
-    'Serial Number': 39,
+    'Serial Number': 37,
     'Category' : 'Control Plane : MPLS Security',
     'Objective': 'Check if Key Chain is set.',
     'Comments': 'Key Chain is setup.' if telnet_check else 'Key Chain is not set up.',
@@ -1096,7 +1138,7 @@ print(f"Check Passed: Key Chain is setup." if telnet_check else "Check Failed: K
 #MBSS 19.2
 telnet_check = mpls_ldp(host, username, password)
 results.append({
-    'Serial Number': 40,
+    'Serial Number': 38,
     'Category' : 'Control Plane : MPLS Security',
     'Objective': 'Check if MPLS LDP is set.',
     'Comments': 'MPLS LDP is setup.' if telnet_check else 'MPLS LDP is not set up.',
@@ -1107,7 +1149,7 @@ print(f"Check Passed: MPLS LDP is setup." if telnet_check else "Check Failed: MP
 #MBSS 19.3
 telnet_check = mpls_vpn_instance(host, username, password)
 results.append({
-    'Serial Number': 41,
+    'Serial Number': 39,
     'Category' : 'Control Plane : MPLS Security',
     'Objective': 'Check if MPLS VPN Instance is set.',
     'Comments': 'MPLS VPN Instance is setup.' if telnet_check else 'MPLS VPN Instance is not set up.',
@@ -1118,7 +1160,7 @@ print(f"Check Passed: VPN Instance is setup." if telnet_check else "Check Failed
 #MBSS 20.1
 telnet_check = igmp_snooping(host, username, password)
 results.append({
-    'Serial Number': 42,
+    'Serial Number': 40,
     'Category' : 'Control Plane : Multicast Security',
     'Objective': 'IGMP Snooping is Setup.',
     'Comments': 'IGMP Snooping is set up' if telnet_check else 'IGMP Snooping is not set up',
@@ -1129,7 +1171,7 @@ print(f"Check Passed: IGMP Snooping is set up." if telnet_check else "Check Fail
 #MBSS 20.2
 telnet_check = igmp_group_policy(host, username, password)
 results.append({
-    'Serial Number': 43,
+    'Serial Number': 41,
     'Category' : 'Control Plane : Multicast Security',
     'Objective': 'IGMP Snooping Group Policy is Setup.',
     'Comments': 'IGMP Snooping Group Policy is set up' if telnet_check else 'IGMP Snooping Group Policy is not set up',
@@ -1140,7 +1182,7 @@ print(f"Check Passed: IGMP Snooping Group Policy is set up." if telnet_check els
 #MBSS 20.3
 telnet_check = acl_rule_2000_verification(host, username, password)
 results.append({
-    'Serial Number': 44,
+    'Serial Number': 42,
     'Category' : 'Control Plane : Multicast Security',
     'Objective': 'ACL Rule 2000.',
     'Comments': 'ACL Rule 2000 is set up' if telnet_check else 'ACL Rule 2000 is not set up',
@@ -1151,7 +1193,7 @@ print(f"Check Passed: ACL Rule 2000 is set up." if telnet_check else "Check Fail
 #MBSS 21.1
 telnet_check = dhcp_snooping_enable(host, username, password)
 results.append({
-    'Serial Number': 45,
+    'Serial Number': 43,
     'Category' : 'Control Plane : SVF System Security',
     'Objective': 'DHCP Snooping Enable.',
     'Comments': 'DHCP Snooping set up' if telnet_check else 'DHCP Snooping is not set up',
@@ -1162,7 +1204,7 @@ print(f"Check Passed: DHCP Snooping is set up." if telnet_check else "Check Fail
 #MBSS 21.2
 telnet_check = dhcp_snooping_trusted(host, username, password)
 results.append({
-    'Serial Number': 46,
+    'Serial Number': 44,
     'Category' : 'Control Plane : SVF System Security',
     'Objective': 'DHCP Snooping Trusted to a network.',
     'Comments': 'DHCP Snooping Trusted to a network.' if telnet_check else 'DHCP Snooping is not Trusted to a network.',
@@ -1173,7 +1215,7 @@ print(f"Check Passed: DHCP Snooping Trusted to a network." if telnet_check else 
 #MBSS 21.3
 telnet_check = ntp_authentication_enable(host, username, password)
 results.append({
-    'Serial Number': 47,
+    'Serial Number': 45,
     'Category' : 'Control Plane : SVF System Security',
     'Objective': 'NTP Authentication is enable.',
     'Comments': 'NTP Authentication is enable.' if telnet_check else 'NTP Authentication is not enable.',
@@ -1184,7 +1226,7 @@ print(f"Check Passed: NTP Authentication is enable." if telnet_check else "Check
 #MBSS 22.1
 telnet_check = ntp_key_id(host, username, password)
 results.append({
-    'Serial Number': 48,
+    'Serial Number': 46,
     'Category' : 'Control Plane : NTP Security',
     'Objective': 'NTP Key ID.',
     'Comments': 'NTP Key ID is set.' if telnet_check else 'NTP Key ID is not set.',
@@ -1196,7 +1238,7 @@ print(f"Check Passed: NTP Key ID is set." if telnet_check else "Check Failed: NT
 #MBSS 23.1
 telnet_check = stp_bpdu_root(host, username, password)
 results.append({
-    'Serial Number': 49,
+    'Serial Number': 47,
     'Category' : 'Control Plane : MSTP Security',
     'Objective': 'STP root protection in set up.',
     'Comments': 'STP root protection is set up.' if telnet_check else 'STP root protection not set.',
@@ -1208,7 +1250,7 @@ print(f"Check Passed: STP root protection  is set up." if telnet_check else "Che
 #MBSS 23.2
 telnet_check = stp_bpdu(host, username, password)
 results.append({
-    'Serial Number': 50,
+    'Serial Number': 48,
     'Category' : 'Control Plane : MSTP Security',
     'Objective': 'STP BPDU is set up.',
     'Comments': 'STP BPDU is set up.' if telnet_check else 'STP BPDU is not set.',
@@ -1219,7 +1261,7 @@ print(f"Check Passed: STP BPDU is set up." if telnet_check else "Check Failed: S
 #MBSS 23.3
 telnet_check = stp_bpdu(host, username, password)
 results.append({
-    'Serial Number': 51,
+    'Serial Number': 49,
     'Category' : 'Control Plane : MSTP Security',
     'Objective': 'Transmit Limit for BPDU is properly set up.',
     'Comments': 'Transmit Limit for BPDU is properly set up.' if telnet_check else 'Transmit Limit for BPDU is properly not set.',
@@ -1230,7 +1272,7 @@ print(f"Check Passed: Transmit Limit for BPDU is properly set up." if telnet_che
 #MBSS 24.1
 telnet_check = stp_bpdu(host, username, password)
 results.append({
-    'Serial Number': 52,
+    'Serial Number': 50,
     'Category' : 'Control Plane : VRRP Security',
     'Objective': 'VRRP authention MD5.',
     'Comments': 'VRRP authention is set up to MD5.' if telnet_check else 'VRRP authention is not set up to MD5.',
@@ -1241,7 +1283,7 @@ print(f"Check Passed: VRRP authention is set up to MD5." if telnet_check else "C
 #MBSS 25.1
 telnet_check = easy_deploy(host, username, password)
 results.append({
-    'Serial Number': 53,
+    'Serial Number': 51,
     'Category' : 'Control Plane : E-Trunk Security',
     'Objective': 'Easy Deploy Function.',
     'Comments': 'Easy Deploy has proper authentication set up.' if telnet_check else 'Easy Deploy has no proper authentication set up (THIS FUNCTION MAY BE NOT AVAILABLE IN ALL DEVICES).',
@@ -1252,7 +1294,7 @@ print(f"Check Passed: Easy Deploy has proper authentication set up." if telnet_c
 #MBSS 26.1
 telnet_check = easy_deploy_security(host, username, password)
 results.append({
-    'Serial Number': 54,
+    'Serial Number': 52,
     'Category' : 'Control Plane : EasyDeploy System Security',
     'Objective': 'Easy Deploy Function security.',
     'Comments': 'Easy Deploy security is set up.' if telnet_check else 'Easy Deploy security is not set up (THIS FUNCTION MAY BE NOT AVAILABLE IN ALL DEVICES).',
@@ -1263,7 +1305,7 @@ print(f"Check Passed: Easy Deploy security is set up." if telnet_check else "Che
 #MBSS 27.1
 telnet_check = Defense_Against_ICMPv6_Attacks(host, username, password)
 results.append({
-    'Serial Number': 55,
+    'Serial Number': 53,
     'Category' : 'Control Plane : Defense Against ICMPv6 Attacks',
     'Objective': 'Defence against ICMPv6 attacks.',
     'Comments': 'Defence against ICMPv6 attacks is set up.' if telnet_check else 'Defence against ICMPv6 attacks is not set up.',
@@ -1274,7 +1316,7 @@ print(f"Check Passed: Defence against ICMPv6 attacks is set up." if telnet_check
 #MBSS 28.1 #ONLY SWITCH
 telnet_check = defence_route_options(host, username, password)
 results.append({
-    'Serial Number': 56,
+    'Serial Number': 54,
     'Category' : 'Control Plane : Defense Against Attacks Launched Using IP Packets with Route Options',
     'Objective': 'Defence against Route Options.',
     'Comments': 'Defence against Route Options is setup.' if telnet_check else 'Defence against Route options is not setup.',
@@ -1285,7 +1327,7 @@ print(f"Check Passed: Defence against Route Options is setup." if telnet_check e
 #MBSS 29.1
 telnet_check = defence_against_ip_spoofing(host, username, password)
 results.append({
-    'Serial Number': 57,
+    'Serial Number': 55,
     'Category' : 'Control Plane : Defense Against IP Address Spoofing Attacks',
     'Objective': 'Defence against IP Spoofing.',
     'Comments': 'Defence against IP Spoofing is setup (Needs manual check).' if telnet_check else 'Defence against IP Spoofing is not setup (Needs manual check).',
@@ -1297,7 +1339,7 @@ print(f"Check Passed: Defence against IP Spoofing is setup (Needs manual check).
 #MBSS 30.1
 telnet_check = data_transmission_security(host, username, password)
 results.append({
-    'Serial Number': 58,
+    'Serial Number': 56,
     'Category' : 'Control Plane : Data Transmission Security',
     'Objective': 'Data Transmission Security.',
     'Comments': 'Data Transmission Security is setup.' if telnet_check else 'Data Transmission Security is not setup.',
@@ -1308,7 +1350,7 @@ print(f"Check Passed: Data Transmission Security is setup." if telnet_check else
 #MBSS 31.1
 telnet_check = data_transmission_security(host, username, password)
 results.append({
-    'Serial Number': 59,
+    'Serial Number': 57,
     'Category' : 'Control Plane : IPv6 ND Security',
     'Objective': 'IPv6 ND Security.',
     'Comments': 'IPv6 ND Security is setup.' if telnet_check else 'IPv6 ND Security is not setup.',
@@ -1319,7 +1361,7 @@ print(f"Check Passed: IPv6 ND Security is setup." if telnet_check else "Check Fa
 #MBSS 32.1
 telnet_check = rule_1_acl_3000(host, username, password)
 results.append({
-    'Serial Number': 60,
+    'Serial Number': 58,
     'Category' : 'Forwarding Plane : ACL',
     'Objective': 'ACL 3000 Rule 1 permit.',
     'Comments': 'ACL 3000 Rule 1 permit is setup.' if telnet_check else 'ACL 3000 Rule 1 permit not setup.',
@@ -1330,7 +1372,7 @@ print(f"Check Passed: ACL 3000 Rule 1 permit is setup." if telnet_check else "Ch
 #MBSS 33.1
 telnet_check = port_protect_group(host, username, password)
 results.append({
-    'Serial Number': 61,
+    'Serial Number': 59,
     'Category' : 'Forwarding Plane : Port Protection',
     'Objective': 'Port Protection.',
     'Comments': 'Port Protection is setup.' if telnet_check else 'Port Protection is not setup.',
@@ -1341,7 +1383,7 @@ print(f"Check Passed: Port Protection is setup." if telnet_check else "Check Fai
 #MBSS 34.1
 telnet_check = port_isolation(host, username, password)
 results.append({
-    'Serial Number': 62,
+    'Serial Number': 60,
     'Category' : 'Forwarding Plane : Port Isolation',
     'Objective': 'Port Isolation.',
     'Comments': 'Port Isolation is setup.' if telnet_check else 'Port Isolation is not setup.',
@@ -1353,7 +1395,7 @@ print(f"Check Passed: Port Isolation is setup." if telnet_check else "Check Fail
 #MBSS 35.1
 telnet_check = port_security_mac(host, username, password)
 results.append({
-    'Serial Number': 63,
+    'Serial Number': 61,
     'Category' : 'Forwarding Plane : Port Security',
     'Objective': 'Port Security.',
     'Comments': 'Port Security via MAC Limiting is setup.' if telnet_check else 'Port Security via MAC Limiting is not setup.',
