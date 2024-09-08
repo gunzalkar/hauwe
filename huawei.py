@@ -383,11 +383,11 @@ def bgp_router_policy_check(host, username, password):
     ssh_client, shell = connect_to_router(host, username, password)
     shell.send('system-view\n')
     time.sleep(1)
-    shell.send('display bgp peer verbose\n')
+    shell.send('display bgp peer verbose | include Export\n')
     time.sleep(1)
     output = shell.recv(65536).decode()
     ssh_client.close()
-    return 'Export route policy is' in output
+    return 'Export route policy is:' in output
 
  
 #MBSS 18.3
@@ -395,7 +395,7 @@ def bgp_keep_alive(host, username, password):
     ssh_client, shell = connect_to_router(host, username, password)
     shell.send('system-view\n')
     time.sleep(1)
-    shell.send('display bgp peer verbose\n')
+    shell.send('display bgp peer verbose | include 30\n')
     time.sleep(1)
     output = shell.recv(65536).decode()
     ssh_client.close()
@@ -959,7 +959,7 @@ results.append({
 print(f"Check Passed: BGP is setup." if telnet_check else "Check Failed: BGP not setup.")
 
 #MBSS 18.2
-telnet_check = bgp_keep_alive(host, username, password)
+telnet_check = bgp_router_policy_check(host, username, password)
 results.append({
     'Serial Number': 37,
     'Category' : 'Control Plane : Routing Protocol Security',
