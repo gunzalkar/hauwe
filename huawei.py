@@ -579,7 +579,7 @@ def easy_deploy(host, username, password):
     time.sleep(1)
     output = shell.recv(65536).decode()
     ssh_client.close()
-    return 'password' or 'cipher'in output
+    return 'cipher' in output
 
 #MBSS 26.1
 def easy_deploy_security(host, username, password):
