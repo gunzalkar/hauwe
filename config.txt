@@ -1,0 +1,4 @@
+# Router connection details
+HOST='192.168.1.250'
+USERNAME='kshitij'
+PASSWORD='Password@1234'
