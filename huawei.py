@@ -569,7 +569,6 @@ def vrrp_authentication(host, username, password):
     ssh_client.close()
     return 'authentication-mode md5' in output
 
-
 #MBSS 25.1
 def easy_deploy(host, username, password):
     ssh_client, shell = connect_to_router(host, username, password)
@@ -592,6 +591,16 @@ def easy_deploy_security(host, username, password):
     ssh_client.close()
     return 'shared-key cipher' in output
 
+#MBSS 27.1
+def Defense_Against_ICMPv6_Attacks(host, username, password):
+    ssh_client, shell = connect_to_router(host, username, password)
+    shell.send('system-view\n')
+    time.sleep(1)
+    shell.send('display current-configuration  | include ipv6\n')
+    time.sleep(1)
+    output = shell.recv(65536).decode()
+    ssh_client.close()
+    return 'undo ipv6 icmp echo-reply receive' and 'undo ipv6 icmp port-unreachable receive' and 'undo ipv6 icmp host-unreachable receive' in output
 
 results = []
 
@@ -639,8 +648,10 @@ results.append({
 })
 print(f"Check Passed: Encryption setting includes AES 256." if encryption_result else "Check Failed: Encryption setting does not include AES 256.")
 
+
 #MBSS 3.2
 retry_result = block_fail_interval_check(host, username, password)
+
 results.append({
     'Serial Number': 8,
     'Category': 'Management Pane : AAA User Management Security',
